@@ -20,7 +20,7 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
 
     <Title>PowerUps</Title>
-    <Version>0.0.0</Version>
+    <Version>1.0.0</Version>
     <Description>A collection of power-ups for your C# Godot game scripts that work with the SuperNodes source generator</Description>
     <Copyright>© 2023 Chickensoft</Copyright>
     <Authors>Chickensoft</Authors>
