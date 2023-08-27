@@ -1,0 +1,13 @@
+Chickensoft.PowerUps/nupkg/
+
+Chickensoft.PowerUps.Tests/coverage/*
+!Chickensoft.PowerUps.Tests/coverage/.gdignore
+
+.godot/
+bin/
+obj/
+.generated/
+.vs/
+.DS_Store
+nupkg/*
+!nupkg/.gitkeep

@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chickensoft.PowerUps", "Chickensoft.PowerUps\Chickensoft.PowerUps.csproj", "{EE9283B6-7931-4417-864A-E73ACD3E908B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chickensoft.PowerUps.Tests", "Chickensoft.PowerUps.Tests\Chickensoft.PowerUps.Tests.csproj", "{63CFDC21-2C0A-4286-BF02-7270DBEE10F7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE9283B6-7931-4417-864A-E73ACD3E908B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE9283B6-7931-4417-864A-E73ACD3E908B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE9283B6-7931-4417-864A-E73ACD3E908B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE9283B6-7931-4417-864A-E73ACD3E908B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63CFDC21-2C0A-4286-BF02-7270DBEE10F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63CFDC21-2C0A-4286-BF02-7270DBEE10F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63CFDC21-2C0A-4286-BF02-7270DBEE10F7}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{63CFDC21-2C0A-4286-BF02-7270DBEE10F7}.Release|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+EndGlobal
