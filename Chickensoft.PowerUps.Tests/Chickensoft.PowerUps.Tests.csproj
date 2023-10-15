@@ -1,4 +1,4 @@
-<Project Sdk="Godot.NET.Sdk/4.0.4">
+<Project Sdk="Godot.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
@@ -20,5 +20,6 @@
     <PackageReference Include="Shouldly" Version="4.1.0" />
     <PackageReference Include="Chickensoft.SuperNodes" Version="1.5.0" PrivateAssets="all" OutputItemType="analyzer" />
     <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.5.0" />
+    <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="1.2.0-godot4.2.0-beta.1" />
   </ItemGroup>
 </Project>

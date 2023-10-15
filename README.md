@@ -25,13 +25,15 @@ Unlike most nuget packages, PowerUps are provided as source-only nuget packages 
 
 > Injecting the code directly into the project referencing the PowerUp allows the [SuperNodes] source generator to see the code and generate the glue needed to make everything work without reflection.
 
-To use the PowerUps, add the following to your `.csproj` file. Be sure to get the latest versions for each package on [Nuget].
+To use the PowerUps, add the following to your `.csproj` file. Be sure to get the latest versions for each package on [Nuget]. Note that the `AutoNode` PowerUp requires the [GodotNodeInterfaces] package so that you can access Godot nodes by interface, rather than the concrete type, which facilitates unit testing.
 
 ```xml
 <ItemGroup>
-    <PackageReference Include="Chickensoft.SuperNodes" Version="1.5.0" PrivateAssets="all" OutputItemType="analyzer" />
-    <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.5.0" />
-    <PackageReference Include="Chickensoft.PowerUps" Version="1.0.0" PrivateAssets="all" />
+    <PackageReference Include="Chickensoft.SuperNodes" Version="1.6.0" PrivateAssets="all" OutputItemType="analyzer" />
+    <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.6.0" />
+    <PackageReference Include="Chickensoft.PowerUps" Version="1.1.0" PrivateAssets="all" />
+    <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="1.1.0-godot4.2.0-beta.1" />
+    <!-- ^ Or whatever the latest versions are. -->
 </ItemGroup>
 ```
 
@@ -125,3 +127,5 @@ public partial class MyNode : Node2D {
 [LogicBlocks]: https://github.com/chickensoft-games/LogicBlocks
 [Nuget]: https://www.nuget.org/packages?q=Chickensoft
 [unique-nodes]: https://docs.godotengine.org/en/stable/tutorials/scripting/scene_unique_nodes.html
+
+[GodotNodeInterfaces]: https://github.com/chickensoft-games/GodotNodeInterfaces

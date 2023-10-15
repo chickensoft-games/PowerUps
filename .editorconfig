@@ -460,3 +460,5 @@ dotnet_diagnostic.CA1716.severity = none
 dotnet_diagnostic.RCS1194.severity = none
 # Let me nest ternary conditional operators as I please.
 dotnet_diagnostic.RCS1238.severity = none
+# Leave me alone about comments
+dotnet_diagnostic.RCS1181.severity = none
