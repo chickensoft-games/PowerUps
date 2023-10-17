@@ -12,6 +12,9 @@ public partial class AutoNodeTestScene : Node2D {
   [Node("Path/To/MyNode")]
   public INode2D MyNode { get; set; } = default!;
 
+  [Node("Path/To/MyNode")]
+  public Node2D MyNodeOriginal { get; set; } = default!;
+
   [Node]
   public INode2D MyUniqueNode { get; set; } = default!;
 

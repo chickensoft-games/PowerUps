@@ -221,14 +221,13 @@ public abstract partial class AutoNode : Node, IAutoNode {
 }
 
 public static class AutoNodeConnector {
-  public class NodeChecker : ITypeReceiver<bool> {
-    public object Node { get; set; } = default!;
+  public class TypeChecker : ITypeReceiver<bool> {
+    public object Value { get; set; } = default!;
 
-    public bool Receive<T>() => Node is T;
+    public bool Receive<T>() => Value is T;
   }
 
-  [ThreadStatic]
-  private static NodeChecker? _checker;
+  private static TypeChecker _checker = new();
 
   public static void ConnectNodes(
       ImmutableDictionary<string, ScriptPropertyOrField> propertiesAndFields,
@@ -248,31 +247,51 @@ public static class AutoNodeConnector {
       var path = nodeAttribute.ArgumentExpressions[0] as string ??
         AsciiToPascalCase(name);
 
-      var uncheckedNode = autoNode.GetNode(path);
+      var originalNode = godotNode.GetNode(path);
 
-      if (uncheckedNode is not INode node) {
+      // see if the unchecked node satisfies the expected type of node from the property type
+      _checker.Value = originalNode;
+      var originalNodeSatisfiesType =
+        autoNode.GetScriptPropertyOrFieldType(name, _checker);
+
+      if (originalNode is null) {
         throw new InvalidOperationException(
           $"Node {path} does not exist in scene tree for property {name} of " +
           $"type {propertyOrField.Type} on {godotNode.Name}."
         );
       }
 
-      // Apparently the correct way to initialize a thread-static field.
-      _checker ??= new NodeChecker();
+      if (originalNodeSatisfiesType) {
+        // Property expected a vanilla Godot node type and it matched, so we
+        // set it and leave.
+        autoNode.SetScriptPropertyOrField(name, originalNode);
+        continue;
+      }
 
-      // See if the node is the expected type.
-      _checker.Node = node;
-      var isValidAssignment =
+      // Plain Godot node type wasn't expected, so we need to check if the
+      // property was expecting a Godot node interface type.
+
+      // check to see if the node needs to be adapted to satisfy an
+      // expected interface type.
+      var adaptedNode = GodotInterfaces.AdaptNode(originalNode);
+      _checker.Value = adaptedNode;
+      var adaptedNodeSatisfiesType =
         autoNode.GetScriptPropertyOrFieldType(name, _checker);
 
-      if (!isValidAssignment) {
-        throw new InvalidCastException(
-          $"Cannot assign node of type {node.GetType()} to property " +
-          $"{name} of type {propertyOrField.Type} on {godotNode.Name}."
+      // If the adapted node does not satisfy the expected interface/adapter
+      // node type, then we can't connect the node to the property.
+      if (!adaptedNodeSatisfiesType) {
+        // Tell user we can't connect the node to the property.
+        throw new InvalidOperationException(
+          $"Node {path} of type {originalNode.GetType()} does not satisfy " +
+          $"the expected type {propertyOrField.Type} for property {name} on " +
+          $"{godotNode.Name}."
         );
       }
 
-      autoNode.SetScriptPropertyOrField(name, node);
+      // Otherwise, the adapted node satisfies the expected adapter or interface
+      // type, so we can be done.
+      autoNode.SetScriptPropertyOrField(name, adaptedNode);
     }
   }
 

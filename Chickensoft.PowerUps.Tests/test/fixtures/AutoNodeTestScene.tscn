@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://t1q8rfxq1esg"]
+[gd_scene load_steps=2 format=3 uid="uid://bc0rrd0etom5k"]
 
 [ext_resource type="Script" path="res://test/fixtures/AutoNodeTestScene.cs" id="1_ego6e"]
 
