@@ -29,23 +29,24 @@ To use the PowerUps, add the following to your `.csproj` file. Be sure to get th
 
 ```xml
 <ItemGroup>
-    <PackageReference Include="Chickensoft.SuperNodes" Version="1.6.0" PrivateAssets="all" OutputItemType="analyzer" />
-    <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.6.0" />
+    <PackageReference Include="Chickensoft.SuperNodes" Version="1.6.1" PrivateAssets="all" OutputItemType="analyzer" />
+    <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.6.1" />
     <PackageReference Include="Chickensoft.PowerUps" Version="1.1.0" PrivateAssets="all" />
-    <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="1.1.0-godot4.2.0-beta.1" />
+    <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="1.7.0-godot4.2.0-beta.1" />
     <!-- ^ Or whatever the latest versions are. -->
 </ItemGroup>
 ```
 
 ## 🌲 AutoNode
 
-The `AutoNode` PowerUp automatically connects fields and properties in your script to a declared node path or unique node name in the scene tree whenever the scene is instantiated.
+The `AutoNode` PowerUp automatically connects fields and properties in your script to a declared node path or unique node name in the scene tree whenever the scene is instantiated, without reflection. It can also be used to connect nodes as interfaces, instead of concrete node types.
 
 Simply apply the `[Node]` attribute to any field or property in your script that you want to automatically connect to a node in your scene.
 
 If you don't specify a node path, the name of the field or property will be converted to a [unique node identifier][unique-nodes] name in PascalCase. For best results, consider using PascalCase for node names in the scene tree.
 
 ```csharp
+using Chickensoft.GodotNodeInterfaces;
 using Chickensoft.PowerUps;
 using Godot;
 using SuperNodes.Types;
@@ -56,17 +57,17 @@ public partial class MyNode : Node2D {
 
   // Automatically connect this field to the provided node path
   [Node("Path/To/MyNode")]
-  private Node2D _myNode = default!;
+  private INode2D _myNode = default!;
 
   // If you don't specify a node path, AutoNode converts the name of the 
   // field to a unique node path specifier in PascalCase: %MyUniqueNode
   [Node]
-  private Node2D _myUniqueNode = default!;
+  private INode2D _myUniqueNode = default!;
 
   // Just specify the unique name if it differs in more than just casing from
   // the field/property name.
   [Node("%OtherUniqueName")]
-  private Node2D _differentName = default!;
+  private INode2D _differentName = default!;
 }
 ```
 
