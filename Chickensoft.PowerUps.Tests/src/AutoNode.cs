@@ -1,12 +1,14 @@
-#pragma warning disable
 namespace Chickensoft.PowerUps;
 
+#pragma warning disable CA1061, CS8766
 
 using System;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using Chickensoft.GodotNodeInterfaces;
+#pragma warning disable CS8019, IDE0005
 using Chickensoft.PowerUps;
+#pragma warning restore CS8019, IDE0005
 using Godot;
 using SuperNodes.Types;
 
@@ -51,8 +53,12 @@ public abstract partial class AutoNode : Node, IAutoNode {
     System.Collections.Generic.Dictionary<string, INode>? nodes
   ) => FakeNodes = new FakeNodeTree(this, nodes);
 
+  #region IAutoNode
   public void AddChild(
-    object node, bool forceReadableName = false, InternalMode @internal = InternalMode.Disabled
+    object node,
+    bool forceReadableName = false,
+    InternalMode @internal =
+    InternalMode.Disabled
   ) {
     if (node is INodeAdapter adapter) {
       // If it's an adapter, we can add the underlying node directly.
@@ -92,7 +98,7 @@ public abstract partial class AutoNode : Node, IAutoNode {
       return fakeNodeTree.FindChild(pattern);
     }
     var node = base.FindChild(pattern, recursive, owned);
-    return node is null ? null : (GodotInterfaces.AdaptNode(node));
+    return node is null ? null : GodotInterfaces.AdaptNode(node);
   }
 
   public new INode[] FindChildren(
@@ -109,11 +115,38 @@ public abstract partial class AutoNode : Node, IAutoNode {
     return adaptedNodes.ToArray();
   }
 
-  public new T GetChild<T>(int idx, bool includeInternal = false) where T : class, INode {
+  public new T GetChild<T>(int idx, bool includeInternal = false)
+    where T : class, INode {
+    if (FakeNodes is FakeNodeTree fakeNodeTree) {
+      return fakeNodeTree.GetChild<T>(idx)!;
+    }
+    var node = base.GetChild(idx, includeInternal);
+    return GodotInterfaces.Adapt<T>(node);
+  }
+
+  public new INode GetChild(int idx, bool includeInternal) {
+    if (FakeNodes is FakeNodeTree fakeNodeTree) {
+      return fakeNodeTree.GetChild(idx);
+    }
+    var node = base.GetChild(idx, includeInternal);
+    return GodotInterfaces.AdaptNode(node);
+  }
+
+  public new T? GetChildOrNull<T>(
+    int idx, bool includeInternal = false
+  ) where T : class, INode {
+    // TODO: This uses GetNode under-the-hood since there's no non-generic
+    // overload for GetChildOrNull. GetChild will cause a warning from Godot if
+    // the node is actually null, and we can't pass through the generics since
+    // they are expected to be the node's interface.
+    //
+    // The fix for this is to add a method to GodotInterfaces that will invoke
+    // a callback with the generic type of the corresponding Godot node for any
+    // given interface type.
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetChild<T>(idx);
     }
-    var node = GetChild(idx, includeInternal);
+    var node = base.GetChild(idx, includeInternal);
     return GodotInterfaces.Adapt<T>(node);
   }
 
@@ -136,7 +169,7 @@ public abstract partial class AutoNode : Node, IAutoNode {
 
   public new INode GetNode(NodePath path) {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetNode(path);
+      return fakeNodeTree.GetNode(path)!;
     }
     var node = base.GetNode(path);
     return node is null ? default! : GodotInterfaces.AdaptNode(node);
@@ -150,6 +183,16 @@ public abstract partial class AutoNode : Node, IAutoNode {
     return node is null
       ? null
       : (INode)GodotInterfaces.AdaptNode(node);
+  }
+
+  public new T? GetNodeOrNull<T>(NodePath path) where T : class, INode {
+    if (FakeNodes is FakeNodeTree fakeNodeTree) {
+      return fakeNodeTree.GetNode<T>(path);
+    }
+    var node = base.GetNodeOrNull(path);
+    return node is null
+      ? null
+      : GodotInterfaces.Adapt<T>(node);
   }
 
   public new bool HasNode(NodePath path) =>
@@ -190,9 +233,9 @@ public abstract partial class AutoNode : Node, IAutoNode {
       $"Cannot remove child of type {node.GetType()} from {GetType()}."
     );
   }
+  #endregion IAutoNode
 
   #region ISuperNode
-
   // These don't need to be copied over since we will be copied into an
   // ISuperNode.
 
@@ -209,7 +252,6 @@ public abstract partial class AutoNode : Node, IAutoNode {
   [PowerUpIgnore]
   public void SetScriptPropertyOrField(string scriptProperty, dynamic? value) =>
       throw new NotImplementedException();
-
   #endregion ISuperNode
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -227,7 +269,7 @@ public static class AutoNodeConnector {
     public bool Receive<T>() => Value is T;
   }
 
-  private static TypeChecker _checker = new();
+  private static readonly TypeChecker _checker = new();
 
   public static void ConnectNodes(
       ImmutableDictionary<string, ScriptPropertyOrField> propertiesAndFields,
@@ -249,7 +291,8 @@ public static class AutoNodeConnector {
 
       var originalNode = godotNode.GetNode(path);
 
-      // see if the unchecked node satisfies the expected type of node from the property type
+      // see if the unchecked node satisfies the expected type of node from the
+      // property type
       _checker.Value = originalNode;
       var originalNodeSatisfiesType =
         autoNode.GetScriptPropertyOrFieldType(name, _checker);
@@ -330,4 +373,4 @@ public static class AutoNodeConnector {
   }
 }
 
-#pragma warning restore
+#pragma warning restore CA1061, CS8766

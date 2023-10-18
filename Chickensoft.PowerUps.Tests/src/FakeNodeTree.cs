@@ -1,3 +1,4 @@
+#pragma warning disable
 namespace Chickensoft.PowerUps;
 
 using System.Collections.Generic;
@@ -44,12 +45,19 @@ public class FakeNodeTree {
     _nodes.Add(name, node);
   }
 
-  public INode GetNode(string path) =>
+  public INode? GetNode(string path) =>
    !_nodes.Contains(path)
       ? throw new KeyNotFoundException(
         $"Node '{path}' not found in {_parent.Name}'s FakeNodeTree."
       )
-      : (INode)_nodes[path]!;
+      : _nodes.Contains(path) ? _nodes[path] as INode : null;
+
+  public T? GetNode<T>(string path) where T : class, INode =>
+   !_nodes.Contains(path)
+      ? throw new KeyNotFoundException(
+        $"Node '{path}' not found in {_parent.Name}'s FakeNodeTree."
+      )
+      : _nodes.Contains(path) ? _nodes[path] as T : null;
 
   public INode? FindChild(string pattern) {
     foreach (string path in _nodes.Keys) {
@@ -91,14 +99,16 @@ public class FakeNodeTree {
     return children.ToArray();
   }
 
-  public T GetChild<T>(int index) where T : class, INode {
+  public T? GetChild<T>(int index) where T : class, INode {
     var actualIndex = index;
     if (actualIndex < 0) {
       // Negative indices access the children from the last one.
       actualIndex = _nodes.Count + actualIndex;
     }
-    return (T)_nodes[actualIndex]!;
+    return _nodes[actualIndex] as T;
   }
+
+  public INode GetChild(int index) => GetChild<INode>(index);
 
   public int GetChildCount() => _nodes.Count;
 
@@ -123,3 +133,4 @@ public class FakeNodeTree {
     return nodes;
   }
 }
+#pragma warning restore

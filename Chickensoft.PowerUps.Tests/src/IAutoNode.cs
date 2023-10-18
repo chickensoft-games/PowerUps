@@ -1,3 +1,4 @@
+#pragma warning disable
 namespace Chickensoft.PowerUps;
 
 using Chickensoft.GodotNodeInterfaces;
@@ -6,7 +7,10 @@ using SuperNodes.Types;
 
 /// <summary>
 /// Interface for a PowerUp that automatically connects declared node
-/// references to their corresponding instances in the scene tree.
+/// references to their corresponding instances in the scene tree. These are
+/// re-implementations of Godot node manipulation and fetching methods that
+/// automatically create node adapters so that you can reference Godot nodes
+/// by interface.
 /// </summary>
 public interface IAutoNode : ISuperNode {
   /// <summary>
@@ -48,14 +52,86 @@ public interface IAutoNode : ISuperNode {
   /// <returns>The first descendant of this node whose name matches <paramref name="pattern" />, or null.</returns>
   INode? FindChild(string pattern, bool recursive = true, bool owned = true);
 
+  /// <summary>
+  /// <para>Finds descendants of this node whose name matches <paramref name="pattern" /> as in <c>String.match</c>, and/or type matches <paramref name="type" /> as in <see cref="GodotObject.IsClass(string)" />. Internal children are also searched over (see <c>internal</c> parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).</para>
+  /// <para><paramref name="pattern" /> does not match against the full path, just against individual node names. It is case-sensitive, with <c>"*"</c> matching zero or more characters and <c>"?"</c> matching any single character except <c>"."</c>).</para>
+  /// <para><paramref name="type" /> will check equality or inheritance, and is case-sensitive. <c>"Object"</c> will match a node whose type is <c>"Node"</c> but not the other way around.</para>
+  /// <para>If <paramref name="recursive" /> is <c>true</c>, all child nodes are included, even if deeply nested. Nodes are checked in tree order, so this node's first direct child is checked first, then its own direct children, etc., before moving to the second direct child, and so on. If <paramref name="recursive" /> is <c>false</c>, only this node's direct children are matched.</para>
+  /// <para>If <paramref name="owned" /> is <c>true</c>, this method only finds nodes who have an assigned <see cref="Node.Owner" />. This is especially important for scenes instantiated through a script, because those scenes don't have an owner.</para>
+  /// <para>Returns an empty array if no matching nodes are found.</para>
+  /// <para><b>Note:</b> As this method walks through all the descendants of the node, it is the slowest way to get references to other nodes. Whenever possible, consider caching the node references into variables.</para>
+  /// <para><b>Note:</b> If you only want to find the first descendant node that matches a pattern, see <see cref="Node.FindChild(string,bool,bool)" />.</para>
+  /// </summary>
   INode[] FindChildren(
     string pattern, string type = "", bool recursive = true, bool owned = true
   );
 
+  /// <summary>
+  /// Returns a child node by its index (see <see cref="Node.GetChildCount(bool)" />).
+  /// This method is often used for iterating all children of a node.
+  /// Negative indices access the children from the last one.
+  /// To access a child node via its name, use <see cref="Node.GetNode(NodePath)" />.
+  /// </summary>
+  /// <seealso cref="Node.GetChildOrNull``1(System.Int32,System.Boolean)" />
+  /// <param name="idx">Child index.</param>
+  /// <param name="includeInternal">
+  /// If <see langword="false" />, internal children are skipped (see <c>internal</c>
+  /// parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).
+  /// </param>
+  /// <exception cref="System.InvalidCastException">
+  /// The fetched node can't be casted to the given type <typeparamref name="T" />.
+  /// </exception>
+  /// <typeparam name="T">The type to cast to. Should be a descendant of <see cref="Node" />.</typeparam>
+  /// <returns>
+  /// The child <see cref="Node" /> at the given index <paramref name="idx" />.
+  /// </returns>
   T GetChild<T>(int idx, bool includeInternal = false) where T : class, INode;
 
+  /// <summary>
+  /// <para>Returns a child node by its index (see <see cref="Node.GetChildCount(bool)" />). This method is often used for iterating all children of a node.</para>
+  /// <para>Negative indices access the children from the last one.</para>
+  /// <para>If <paramref name="includeInternal" /> is <c>false</c>, internal children are skipped (see <c>internal</c> parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).</para>
+  /// <para>To access a child node via its name, use <see cref="Node.GetNode(NodePath)" />.</para>
+  /// </summary>
+  /// <param name="idx">Child index.</param>
+  /// <param name="includeInternal">
+  /// If <see langword="false" />, internal children are skipped (see <c>internal</c>
+  /// parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).
+  /// </param>
+  INode GetChild(int idx, bool includeInternal = false);
+
+  /// <summary>
+  /// Returns a child node by its index (see <see cref="Node.GetChildCount(bool)" />).
+  /// This method is often used for iterating all children of a node.
+  /// Negative indices access the children from the last one.
+  /// To access a child node via its name, use <see cref="Node.GetNode(NodePath)" />.
+  /// </summary>
+  /// <seealso cref="Node.GetChild``1(System.Int32,System.Boolean)" />
+  /// <param name="idx">Child index.</param>
+  /// <param name="includeInternal">
+  /// If <see langword="false" />, internal children are skipped (see <c>internal</c>
+  /// parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).
+  /// </param>
+  /// <typeparam name="T">The type to cast to. Should be a descendant of <see cref="Node" />.</typeparam>
+  /// <returns>
+  /// The child <see cref="Node" /> at the given index <paramref name="idx" />, or <see langword="null" /> if not found.
+  /// </returns>
+  T? GetChildOrNull<T>(int idx, bool includeInternal = false) where T : class, INode;
+
+  /// <summary>
+  /// <para>Returns the number of child nodes.</para>
+  /// <para>If <paramref name="includeInternal" /> is <c>false</c>, internal children aren't counted (see <c>internal</c> parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).</para>
+  /// </summary>
+  /// <param name="includeInternal">
+  /// If <see langword="false" />, internal children are skipped (see <c>internal</c>
+  /// parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).
+  /// </param>
   int GetChildCount(bool includeInternal = false);
 
+  /// <summary>
+  /// <para>Returns an array of references to node's children.</para>
+  /// <para>If <paramref name="includeInternal" /> is <c>false</c>, the returned array won't include internal children (see <c>internal</c> parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).</para>
+  /// </summary>
   INode[] GetChildren(bool includeInternal = false);
 
   /// <summary>
@@ -83,9 +159,54 @@ public interface IAutoNode : ISuperNode {
   /// <param name="path">The path to the node to return.</param>
   INode GetNode(NodePath path);
 
+  /// <summary>
+  /// Similar to <see cref="Node.GetNode(NodePath)" />, but does not log an error if <paramref name="path" />
+  /// does not point to a valid <see cref="Node" />.
+  /// </summary>
+  /// <example>
+  /// Example: Assume your current node is Character and the following tree:
+  /// <code>
+  /// /root
+  /// /root/Character
+  /// /root/Character/Sword
+  /// /root/Character/Backpack/Dagger
+  /// /root/MyGame
+  /// /root/Swamp/Alligator
+  /// /root/Swamp/Mosquito
+  /// /root/Swamp/Goblin
+  /// </code>
+  /// Possible paths are:
+  /// <code>
+  /// GetNode("Sword");
+  /// GetNode("Backpack/Dagger");
+  /// GetNode("../Swamp/Alligator");
+  /// GetNode("/root/MyGame");
+  /// </code>
+  /// </example>
+  /// <seealso cref="Node.GetNode``1(Godot.NodePath)" />
+  /// <param name="path">The path to the node to fetch.</param>
+  /// <typeparam name="T">The type to cast to. Should be a descendant of <see cref="Node" />.</typeparam>
+  /// <returns>
+  /// The <see cref="Node" /> at the given <paramref name="path" />, or <see langword="null" /> if not found.
+  /// </returns>
+  T GetNodeOrNull<T>(NodePath path) where T : class, INode;
+
+  /// <summary>
+  /// <para>Similar to <see cref="Node.GetNode(NodePath)" />, but does not log an error if <paramref name="path" /> does not point to a valid <see cref="Node" />.</para>
+  /// </summary>
   INode? GetNodeOrNull(NodePath path);
 
+  /// <summary>
+  /// <para>Returns <c>true</c> if the node that the <see cref="NodePath" /> points to exists.</para>
+  /// </summary>
+  /// <param name="path">Node path.</param>
   bool HasNode(NodePath path);
 
+  /// <summary>
+  /// <para>Removes a child node. The node is NOT deleted and must be deleted manually.</para>
+  /// <para><b>Note:</b> This function may set the <see cref="Node.Owner" /> of the removed Node (or its descendants) to be <c>null</c>, if that <see cref="Node.Owner" /> is no longer a parent or ancestor.</para>
+  /// </summary>
+  /// <param name="node">Node to remove.</param>
   void RemoveChild(object node);
 }
+#pragma warning restore
