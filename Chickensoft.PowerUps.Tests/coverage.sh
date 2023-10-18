@@ -2,7 +2,7 @@
 
 # To collect code coverage, you will need the following environment setup:
 #
-# - A "GODOT4" environment variable pointing to the Godot executable
+# - A "GODOT" environment variable pointing to the Godot executable
 # - ReportGenerator installed
 #
 #     dotnet tool install -g dotnet-reportgenerator-globaltool
@@ -26,7 +26,7 @@ dotnet build --no-restore
 
 coverlet \
   "./.godot/mono/temp/bin/Debug" --verbosity detailed \
-  --target $GODOT4 \
+  --target $GODOT \
   --targetargs "--headless --run-tests --coverage --quit-on-finish" \
   --format "opencover" \
   --output "./coverage/coverage.xml" \
@@ -45,7 +45,7 @@ reportgenerator \
   -reports:"./coverage/coverage.xml" \
   -targetdir:"./coverage/report" \
   "-assemblyfilters:$ASSEMBLIES_TO_REMOVE" \
-  "-classfilters:-GodotPlugins.Game.Main;-Chickensoft.PowerUps.Tests.*;-Chickensoft.PowerUps.AutoDispose;-Chickensoft.PowerUps.AutoNode;-Chickensoft.PowerUps.NodeAttribute" \
+  "-classfilters:-GodotPlugins.Game.Main;-Chickensoft.PowerUps.Tests.*;-Chickensoft.PowerUps.AutoDispose;-Chickensoft.PowerUps.AutoNode;-Chickensoft.PowerUps.AutoSetup" \
   -reporttypes:"Html;Badges"
 
 # Copy badges into their own folder. The badges folder should be included in

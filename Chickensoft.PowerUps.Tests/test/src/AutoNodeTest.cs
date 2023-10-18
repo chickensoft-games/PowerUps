@@ -25,7 +25,10 @@ public class AutoNodeTest : TestClass {
   [Test]
   public void ConnectsNodesCorrectlyWhenInstantiated() {
     _scene.MyNode.ShouldNotBeNull();
+    _scene.MyNodeOriginal.ShouldNotBeNull();
     _scene.MyUniqueNode.ShouldNotBeNull();
     _scene.DifferentName.ShouldNotBeNull();
+    _scene._my_unique_node.ShouldNotBeNull();
+    _scene.SomeOtherNodeReference.ShouldBeNull();
   }
 }

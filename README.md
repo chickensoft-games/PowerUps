@@ -25,25 +25,28 @@ Unlike most nuget packages, PowerUps are provided as source-only nuget packages 
 
 > Injecting the code directly into the project referencing the PowerUp allows the [SuperNodes] source generator to see the code and generate the glue needed to make everything work without reflection.
 
-To use the PowerUps, add the following to your `.csproj` file. Be sure to get the latest versions for each package on [Nuget].
+To use the PowerUps, add the following to your `.csproj` file. Be sure to get the latest versions for each package on [Nuget]. Note that the `AutoNode` PowerUp requires the [GodotNodeInterfaces] package so that you can access Godot nodes by interface, rather than the concrete type, which facilitates unit testing.
 
 ```xml
 <ItemGroup>
-    <PackageReference Include="Chickensoft.SuperNodes" Version="1.5.0" PrivateAssets="all" OutputItemType="analyzer" />
-    <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.5.0" />
-    <PackageReference Include="Chickensoft.PowerUps" Version="1.0.0" PrivateAssets="all" />
+    <PackageReference Include="Chickensoft.SuperNodes" Version="1.6.1" PrivateAssets="all" OutputItemType="analyzer" />
+    <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.6.1" />
+    <PackageReference Include="Chickensoft.PowerUps" Version="1.1.0" PrivateAssets="all" />
+    <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="1.7.0-godot4.2.0-beta.1" />
+    <!-- ^ Or whatever the latest versions are. -->
 </ItemGroup>
 ```
 
 ## 🌲 AutoNode
 
-The `AutoNode` PowerUp automatically connects fields and properties in your script to a declared node path or unique node name in the scene tree whenever the scene is instantiated.
+The `AutoNode` PowerUp automatically connects fields and properties in your script to a declared node path or unique node name in the scene tree whenever the scene is instantiated, without reflection. It can also be used to connect nodes as interfaces, instead of concrete node types.
 
 Simply apply the `[Node]` attribute to any field or property in your script that you want to automatically connect to a node in your scene.
 
 If you don't specify a node path, the name of the field or property will be converted to a [unique node identifier][unique-nodes] name in PascalCase. For best results, consider using PascalCase for node names in the scene tree.
 
 ```csharp
+using Chickensoft.GodotNodeInterfaces;
 using Chickensoft.PowerUps;
 using Godot;
 using SuperNodes.Types;
@@ -54,17 +57,17 @@ public partial class MyNode : Node2D {
 
   // Automatically connect this field to the provided node path
   [Node("Path/To/MyNode")]
-  private Node2D _myNode = default!;
+  private INode2D _myNode = default!;
 
   // If you don't specify a node path, AutoNode converts the name of the 
   // field to a unique node path specifier in PascalCase: %MyUniqueNode
   [Node]
-  private Node2D _myUniqueNode = default!;
+  private INode2D _myUniqueNode = default!;
 
   // Just specify the unique name if it differs in more than just casing from
   // the field/property name.
   [Node("%OtherUniqueName")]
-  private Node2D _differentName = default!;
+  private INode2D _differentName = default!;
 }
 ```
 
@@ -125,3 +128,5 @@ public partial class MyNode : Node2D {
 [LogicBlocks]: https://github.com/chickensoft-games/LogicBlocks
 [Nuget]: https://www.nuget.org/packages?q=Chickensoft
 [unique-nodes]: https://docs.godotengine.org/en/stable/tutorials/scripting/scene_unique_nodes.html
+
+[GodotNodeInterfaces]: https://github.com/chickensoft-games/GodotNodeInterfaces
