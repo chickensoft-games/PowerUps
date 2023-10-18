@@ -22,7 +22,5 @@ public partial class AutoDisposeTestScene : Node2D {
   // to leave it alone to avoid null reference errors.
   public DisposableObject MyNullDisposable { get; set; } = default!;
 
-  public void OnReady() {
-    MyDisposable = new DisposableObject();
-  }
+  public void OnReady() => MyDisposable = new DisposableObject();
 }
