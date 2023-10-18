@@ -46,18 +46,10 @@ public class FakeNodeTree {
   }
 
   public INode? GetNode(string path) =>
-   !_nodes.Contains(path)
-      ? throw new KeyNotFoundException(
-        $"Node '{path}' not found in {_parent.Name}'s FakeNodeTree."
-      )
-      : _nodes.Contains(path) ? _nodes[path] as INode : null;
+    _nodes.Contains(path) ? (INode)_nodes[path] : null;
 
   public T? GetNode<T>(string path) where T : class, INode =>
-   !_nodes.Contains(path)
-      ? throw new KeyNotFoundException(
-        $"Node '{path}' not found in {_parent.Name}'s FakeNodeTree."
-      )
-      : _nodes.Contains(path) ? _nodes[path] as T : null;
+    _nodes.Contains(path) ? (T)_nodes[path] : null;
 
   public INode? FindChild(string pattern) {
     foreach (string path in _nodes.Keys) {

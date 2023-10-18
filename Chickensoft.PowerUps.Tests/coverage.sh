@@ -45,7 +45,7 @@ reportgenerator \
   -reports:"./coverage/coverage.xml" \
   -targetdir:"./coverage/report" \
   "-assemblyfilters:$ASSEMBLIES_TO_REMOVE" \
-  "-classfilters:-GodotPlugins.Game.Main;-Chickensoft.PowerUps.Tests.*;-Chickensoft.PowerUps.AutoDispose;-Chickensoft.PowerUps.AutoNode;-Chickensoft.PowerUps.NodeAttribute" \
+  "-classfilters:-GodotPlugins.Game.Main;-Chickensoft.PowerUps.Tests.*;-Chickensoft.PowerUps.AutoDispose;-Chickensoft.PowerUps.AutoNode;-Chickensoft.PowerUps.AutoSetup" \
   -reporttypes:"Html;Badges"
 
 # Copy badges into their own folder. The badges folder should be included in

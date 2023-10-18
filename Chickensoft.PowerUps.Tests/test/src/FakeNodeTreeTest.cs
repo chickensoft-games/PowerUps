@@ -72,20 +72,15 @@ public class FakeNodeTreeTest : TestClass {
   }
 
   [Test]
-  public void GetNodeThrowsOnMissingNode() {
-    var children = new Dictionary<string, INode>() { ["A"] = A, ["B"] = B };
-    var tree = new FakeNodeTree(TestScene, children);
-
-    Should.Throw<KeyNotFoundException>(() => tree.GetNode("C"));
-  }
-
-  [Test]
   public void GetNodeReturnsNode() {
     var children = new Dictionary<string, INode>() { ["A"] = A, ["B"] = B };
     var tree = new FakeNodeTree(TestScene, children);
 
     tree.GetNode("A").ShouldBe(A);
+    tree.GetNode<INode>("A").ShouldBe(A);
     tree.GetNode("B").ShouldBe(B);
+    tree.GetNode("nonexistent").ShouldBeNull();
+    tree.GetNode<INode2D>("nonexistent").ShouldBeNull();
   }
 
   [Test]
@@ -121,7 +116,9 @@ public class FakeNodeTreeTest : TestClass {
     var tree = new FakeNodeTree(TestScene, children);
 
     var result = tree.GetChild<INode>(1); // Get the second child (B).
+    var result2 = tree.GetChild(1);
     result.ShouldBe(B);
+    result.ShouldBeSameAs(result2);
   }
 
   [Test]
