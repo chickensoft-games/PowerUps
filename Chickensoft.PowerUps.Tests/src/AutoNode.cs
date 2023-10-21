@@ -54,7 +54,7 @@ public abstract partial class AutoNode : Node, IAutoNode {
   ) => FakeNodes = new FakeNodeTree(this, nodes);
 
   #region IAutoNode
-  public void AddChild(
+  public void AddChildEx(
     object node,
     bool forceReadableName = false,
     InternalMode @internal =
@@ -62,13 +62,13 @@ public abstract partial class AutoNode : Node, IAutoNode {
   ) {
     if (node is INodeAdapter adapter) {
       // If it's an adapter, we can add the underlying node directly.
-      base.AddChild(adapter.Object, forceReadableName, @internal);
+      AddChild(adapter.Object, forceReadableName, @internal);
       return;
     }
 
     if (node is Node godotNode) {
       // If it's a Godot node, we can add it directly.
-      base.AddChild(godotNode, forceReadableName, @internal);
+      AddChild(godotNode, forceReadableName, @internal);
       return;
     }
 
@@ -93,21 +93,21 @@ public abstract partial class AutoNode : Node, IAutoNode {
     );
   }
 
-  public new INode? FindChild(string pattern, bool recursive, bool owned) {
+  public INode? FindChildEx(string pattern, bool recursive, bool owned) {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.FindChild(pattern);
     }
-    var node = base.FindChild(pattern, recursive, owned);
+    var node = FindChild(pattern, recursive, owned);
     return node is null ? null : GodotInterfaces.AdaptNode(node);
   }
 
-  public new INode[] FindChildren(
+  public INode[] FindChildrenEx(
     string pattern, string type = "", bool recursive = true, bool owned = true
   ) {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.FindChildren(pattern);
     }
-    var nodes = base.FindChildren(pattern, type, recursive, owned);
+    var nodes = FindChildren(pattern, type, recursive, owned);
     var adaptedNodes = new System.Collections.Generic.List<INode>(nodes.Count);
     foreach (var node in nodes) {
       adaptedNodes.Add(GodotInterfaces.AdaptNode(node));
@@ -115,24 +115,24 @@ public abstract partial class AutoNode : Node, IAutoNode {
     return adaptedNodes.ToArray();
   }
 
-  public new T GetChild<T>(int idx, bool includeInternal = false)
+  public T GetChildEx<T>(int idx, bool includeInternal = false)
     where T : class, INode {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetChild<T>(idx)!;
     }
-    var node = base.GetChild(idx, includeInternal);
+    var node = GetChild(idx, includeInternal);
     return GodotInterfaces.Adapt<T>(node);
   }
 
-  public new INode GetChild(int idx, bool includeInternal) {
+  public INode GetChildEx(int idx, bool includeInternal) {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetChild(idx);
     }
-    var node = base.GetChild(idx, includeInternal);
+    var node = GetChild(idx, includeInternal);
     return GodotInterfaces.AdaptNode(node);
   }
 
-  public new T? GetChildOrNull<T>(
+  public T? GetChildOrNullEx<T>(
     int idx, bool includeInternal = false
   ) where T : class, INode {
     // TODO: This uses GetNode under-the-hood since there's no non-generic
@@ -146,20 +146,20 @@ public abstract partial class AutoNode : Node, IAutoNode {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetChild<T>(idx);
     }
-    var node = base.GetChild(idx, includeInternal);
+    var node = GetChild(idx, includeInternal);
     return GodotInterfaces.Adapt<T>(node);
   }
 
-  public new int GetChildCount(bool includeInternal = false) =>
+  public int GetChildCountEx(bool includeInternal = false) =>
     FakeNodes is FakeNodeTree fakeNodeTree
       ? fakeNodeTree.GetChildCount()
       : GetChildCount(includeInternal);
 
-  public new INode[] GetChildren(bool includeInternal = false) {
+  public INode[] GetChildrenEx(bool includeInternal = false) {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetChildren();
     }
-    var nodes = base.GetChildren(includeInternal);
+    var nodes = GetChildren(includeInternal);
     var adaptedNodes = new System.Collections.Generic.List<INode>(nodes.Count);
     foreach (var node in nodes) {
       adaptedNodes.Add(GodotInterfaces.AdaptNode(node));
@@ -167,49 +167,49 @@ public abstract partial class AutoNode : Node, IAutoNode {
     return adaptedNodes.ToArray();
   }
 
-  public new INode GetNode(NodePath path) {
+  public INode GetNodeEx(NodePath path) {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetNode(path)!;
     }
-    var node = base.GetNode(path);
+    var node = GetNode(path);
     return node is null ? default! : GodotInterfaces.AdaptNode(node);
   }
 
-  public new INode? GetNodeOrNull(NodePath path) {
+  public INode? GetNodeOrNullEx(NodePath path) {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetNode(path);
     }
-    var node = base.GetNodeOrNull(path);
+    var node = GetNodeOrNull(path);
     return node is null
       ? null
       : (INode)GodotInterfaces.AdaptNode(node);
   }
 
-  public new T? GetNodeOrNull<T>(NodePath path) where T : class, INode {
+  public T? GetNodeOrNullEx<T>(NodePath path) where T : class, INode {
     if (FakeNodes is FakeNodeTree fakeNodeTree) {
       return fakeNodeTree.GetNode<T>(path);
     }
-    var node = base.GetNodeOrNull(path);
+    var node = GetNodeOrNull(path);
     return node is null
       ? null
       : GodotInterfaces.Adapt<T>(node);
   }
 
-  public new bool HasNode(NodePath path) =>
+  public bool HasNodeEx(NodePath path) =>
     FakeNodes is FakeNodeTree fakeNodeTree
       ? fakeNodeTree.HasNode(path)
-      : base.HasNode(path);
+      : HasNode(path);
 
-  public void RemoveChild(object node) {
+  public void RemoveChildEx(object node) {
     if (node is INodeAdapter adapter) {
       // If it's an adapter, we can remove the underlying node directly.
-      base.RemoveChild(adapter.Object);
+      RemoveChild(adapter.Object);
       return;
     }
 
     if (node is Node godotNode) {
       // If it's a Godot node, we can remove it directly.
-      base.RemoveChild(godotNode);
+      RemoveChild(godotNode);
       return;
     }
 
@@ -275,7 +275,7 @@ public static class AutoNodeConnector {
       ImmutableDictionary<string, ScriptPropertyOrField> propertiesAndFields,
       IAutoNode autoNode
     ) {
-    var godotNode = (Node)autoNode;
+    var node = (Node)autoNode;
     foreach (var (name, propertyOrField) in propertiesAndFields) {
       if (
         !propertyOrField.Attributes.TryGetValue(
@@ -289,34 +289,54 @@ public static class AutoNodeConnector {
       var path = nodeAttribute.ArgumentExpressions[0] as string ??
         AsciiToPascalCase(name);
 
-      var originalNode = godotNode.GetNode(path);
+      // First, check to see if the node has been faked for testing.
+      // Faked nodes take precedence over real nodes.
+      if (autoNode.FakeNodes?.GetNode(path) is INode fakeNode) {
+        // We found a faked node for this path. Make sure it's the expected
+        // type.
+        _checker.Value = fakeNode;
+        var satisfiesFakeType =
+          autoNode.GetScriptPropertyOrFieldType(name, _checker);
+        if (!satisfiesFakeType) {
+          throw new InvalidOperationException(
+            $"Found a faked node at '{path}' of type " +
+            $"'{fakeNode.GetType().Name}' that is not the expected type " +
+            $"'{propertyOrField.Type.Name}' for member '{name}' on " +
+            $"'{node.Name}'."
+          );
+        }
+        // Faked node satisfies the expected type :)
+        autoNode.SetScriptPropertyOrField(name, fakeNode);
+        continue;
+      }
+
+      // We're dealing with what should be an actual node in the tree.
+      var godotNode = node.GetNodeOrNull(path) ?? throw new
+        InvalidOperationException(
+          $"Node at '{path}' does not exist in either the real or fake " +
+          $"subtree for '{node.Name}' member '{name}' of type " +
+          $"'{propertyOrField.Type.Name}'."
+        );
 
       // see if the unchecked node satisfies the expected type of node from the
       // property type
-      _checker.Value = originalNode;
+      _checker.Value = godotNode;
       var originalNodeSatisfiesType =
         autoNode.GetScriptPropertyOrFieldType(name, _checker);
-
-      if (originalNode is null) {
-        throw new InvalidOperationException(
-          $"Node {path} does not exist in scene tree for property {name} of " +
-          $"type {propertyOrField.Type} on {godotNode.Name}."
-        );
-      }
 
       if (originalNodeSatisfiesType) {
         // Property expected a vanilla Godot node type and it matched, so we
         // set it and leave.
-        autoNode.SetScriptPropertyOrField(name, originalNode);
+        autoNode.SetScriptPropertyOrField(name, godotNode);
         continue;
       }
 
       // Plain Godot node type wasn't expected, so we need to check if the
       // property was expecting a Godot node interface type.
-
-      // check to see if the node needs to be adapted to satisfy an
+      //
+      // Check to see if the node needs to be adapted to satisfy an
       // expected interface type.
-      var adaptedNode = GodotInterfaces.AdaptNode(originalNode);
+      var adaptedNode = GodotInterfaces.AdaptNode(godotNode);
       _checker.Value = adaptedNode;
       var adaptedNodeSatisfiesType =
         autoNode.GetScriptPropertyOrFieldType(name, _checker);
@@ -326,9 +346,9 @@ public static class AutoNodeConnector {
       if (!adaptedNodeSatisfiesType) {
         // Tell user we can't connect the node to the property.
         throw new InvalidOperationException(
-          $"Node {path} of type {originalNode.GetType()} does not satisfy " +
-          $"the expected type {propertyOrField.Type} for property {name} on " +
-          $"{godotNode.Name}."
+          $"Node at '{path}' of type '{godotNode.GetType().Name}' does not " +
+          $"satisfy the expected type '{propertyOrField.Type.Name}' for " +
+          $"member '{name}' on '{node.Name}'."
         );
       }
 
@@ -356,15 +376,17 @@ public static class AutoNodeConnector {
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static string AsciiToPascalCase(string input) {
     var span = input.AsSpan();
-    Span<char> output = stackalloc char[span.Length];
-    var outputIndex = 0;
+    Span<char> output = stackalloc char[span.Length + 1];
+    var outputIndex = 1;
 
-    for (var i = 0; i < span.Length; i++) {
-      var c = span[i];
+    output[0] = '%';
+
+    for (var i = 1; i < span.Length + 1; i++) {
+      var c = span[i - 1];
 
       if (c == '_') { continue; }
 
-      output[outputIndex++] = i == 0 || span[i - 1] == '_'
+      output[outputIndex++] = i == 1 || span[i - 2] == '_'
         ? (char)(c & 0xDF)
         : c;
     }

@@ -464,3 +464,5 @@ dotnet_diagnostic.RCS1238.severity = none
 dotnet_diagnostic.RCS1181.severity = none
 # Allow empty catch
 dotnet_diagnostic.RCS1075.severity = none
+# Allow owning disposable fields so we don't mess up tests
+dotnet_diagnostic.CA1001.severity = none

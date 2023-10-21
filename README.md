@@ -14,7 +14,7 @@ A collection of power-ups for your C# Godot game scripts that work with the [Sup
 
 Currently, two PowerUps are provided by this package: `AutoNode` and `AutoDispose`.
 
-- 🌲 AutoNode: automatically connect fields and properties to their corresponding nodes in the scene tree.
+- 🌲 AutoNode: automatically connect fields and properties to their corresponding nodes in the scene tree — also provides access to nodes via their interfaces using [GodotNodeInterfaces].
 - 🚮 AutoDispose: automatically dispose of disposable properties owned by your script when it exits the scene tree.
 
 > Chickensoft also maintains a third PowerUp for dependency injection called `AutoInject` that resides in its own [AutoInject] repository.
@@ -43,7 +43,11 @@ The `AutoNode` PowerUp automatically connects fields and properties in your scri
 
 Simply apply the `[Node]` attribute to any field or property in your script that you want to automatically connect to a node in your scene.
 
-If you don't specify a node path, the name of the field or property will be converted to a [unique node identifier][unique-nodes] name in PascalCase. For best results, consider using PascalCase for node names in the scene tree.
+If you don't specify a node path in the `[Node]` attribute, the name of the field or property will be converted to a [unique node identifier][unique-nodes] name in PascalCase. For example, the field name below `_my_unique_node` is converted to the unique node path name `%MyUniqueNode` by converting the property name to PascalCase and prefixing the percent sign indicator. Likewise, the property name `MyUniqueNode` is converted to `%MyUniqueNode`, which isn't much of a conversion since the property name is already in PascalCase.
+
+For best results, use PascalCase for your node names in the scene tree (which Godot tends to do by default, anyways).
+
+In the example below, we're using [GodotNodeInterfaces] to reference nodes as their interfaces instead of their concrete Godot types. This allows us to write a unit test where we fake the nodes in the scene tree by substituting mock nodes, allowing us to test a single node script at a time without polluting our test coverage.
 
 ```csharp
 using Chickensoft.GodotNodeInterfaces;
@@ -55,19 +59,94 @@ using SuperNodes.Types;
 public partial class MyNode : Node2D {
   public override partial void _Notification(int what);
 
-  // Automatically connect this field to the provided node path
-  [Node("Path/To/MyNode")]
-  private INode2D _myNode = default!;
+  [Node("Path/To/SomeNode")]
+  public INode2D SomeNode { get; set; } = default!;
 
-  // If you don't specify a node path, AutoNode converts the name of the 
-  // field to a unique node path specifier in PascalCase: %MyUniqueNode
-  [Node]
-  private INode2D _myUniqueNode = default!;
+  [Node] // Connects to "%MyUniqueNode" since no path was specified.
+  public INode2D MyUniqueNode { get; set; } = default!;
 
-  // Just specify the unique name if it differs in more than just casing from
-  // the field/property name.
   [Node("%OtherUniqueName")]
-  private INode2D _differentName = default!;
+  public INode2D DifferentName { get; set; } = default!;
+
+  [Node] // Connects to "%MyUniqueNode" since no path was specified.
+  internal INode2D _my_unique_node = default!;
+}
+```
+
+### 🤯 Using Interfaces
+
+If you're using [GodotNodeInterfaces], you can access and manipulate descendent nodes via their interface instead of their concrete Godot type. Each AutoNode receives a number of additional methods that match a Godot method, but with the added "Ex" suffix (short for Extended).
+
+- `AddChildEx()`
+- `FindChildEx()`
+- `FindChildrenEx()`
+- `GetChildEx()`
+- `GetChildrenEx()`
+- `GetChildOrNullEx()`
+- `GetChildCountEx()`
+- `GetChildrenEx()`
+- `GetNodeEx()`
+- `GetNodeOrNullEx()`
+- `HasNodeEx()`
+- `RemoveChildEx()`
+
+### 🧪 Testing
+
+We can easily write a test for the example above by substituting mock nodes:
+
+```csharp
+using System.Threading.Tasks;
+using Chickensoft.GodotNodeInterfaces;
+using Chickensoft.GoDotTest;
+using Chickensoft.PowerUps.Tests.Fixtures;
+using Godot;
+using GodotTestDriver;
+using Moq;
+using Shouldly;
+
+public class MyNodeTest : TestClass {
+  private Fixture _fixture = default!;
+  private MyNode _scene = default!;
+
+  private Mock<INode2D> _someNode = default!;
+  private Mock<INode2D> _myUniqueNode = default!;
+  private Mock<INode2D> _otherUniqueNode = default!;
+
+  public MyNodeTest(Node testScene) : base(testScene) { }
+
+  [Setup]
+  public async Task Setup() {
+    _fixture = new(TestScene.GetTree());
+
+    _someNode = new();
+    _myUniqueNode = new();
+    _otherUniqueNode = new();
+
+    _scene = new MyNode();
+    _scene.FakeNodeTree(new() {
+      ["Path/To/SomeNode"] = _someNode.Object,
+      ["%MyUniqueNode"] = _myUniqueNode.Object,
+      ["%OtherUniqueName"] = _otherUniqueNode.Object,
+    });
+
+    await _fixture.AddToRoot(_scene);
+  }
+
+  [Cleanup]
+  public async Task Cleanup() => await _fixture.Cleanup();
+
+  [Test]
+  public void UsesFakeNodeTree() {
+    // Making a new instance of a node without instantiating a scene doesn't
+    // trigger NotificationSceneInstantiated, so if we want to make sure our
+    // AutoNodes get hooked up and use the FakeNodeTree, we need to do it manually.
+    _scene._Notification((int)Node.NotificationSceneInstantiated);
+
+    _scene.SomeNode.ShouldBe(_someNode.Object);
+    _scene.MyUniqueNode.ShouldBe(_myUniqueNode.Object);
+    _scene.DifferentName.ShouldBe(_otherUniqueNode.Object);
+    _scene._my_unique_node.ShouldBe(_myUniqueNode.Object);
+  }
 }
 ```
 
