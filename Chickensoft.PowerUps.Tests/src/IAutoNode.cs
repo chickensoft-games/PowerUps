@@ -13,6 +13,10 @@ using SuperNodes.Types;
 /// by interface.
 /// </summary>
 public interface IAutoNode : ISuperNode {
+  /// <summary>Fake node tree, used for reading fake nodes during
+  /// unit testing.</summary>
+  public FakeNodeTree? FakeNodes { get; }
+
   /// <summary>
   /// <para>Adds a child <paramref name="node" />. Nodes can have any number of children, but every child must have a unique name. Child nodes are automatically deleted when the parent node is deleted, so an entire scene can be removed by deleting its topmost node.</para>
   /// <para>If <paramref name="forceReadableName" /> is <c>true</c>, improves the readability of the added <paramref name="node" />. If not named, the <paramref name="node" /> is renamed to its type, and if it shares <see cref="Node.Name" /> with a sibling, a number is suffixed more appropriately. This operation is very slow. As such, it is recommended leaving this to <c>false</c>, which assigns a dummy name featuring <c>@</c> in both situations.</para>
@@ -33,7 +37,7 @@ public interface IAutoNode : ISuperNode {
   /// <param name="node">The node to add as a child.</param>
   /// <param name="forceReadableName">If <c>true</c>, improves the readability of the added <paramref name="node" />.</param>
   /// <param name="internal">If different than <see cref="Node.InternalMode.Disabled" />, the child will be added as internal node.</param>
-  void AddChild(
+  void AddChildEx(
     object node, bool forceReadableName = false, Node.InternalMode @internal = Node.InternalMode.Disabled
   );
 
@@ -50,7 +54,7 @@ public interface IAutoNode : ISuperNode {
   /// <param name="recursive">True recursive search.</param>
   /// <param name="owned">True to only find nodes with the same owner.</param>
   /// <returns>The first descendant of this node whose name matches <paramref name="pattern" />, or null.</returns>
-  INode? FindChild(string pattern, bool recursive = true, bool owned = true);
+  INode? FindChildEx(string pattern, bool recursive = true, bool owned = true);
 
   /// <summary>
   /// <para>Finds descendants of this node whose name matches <paramref name="pattern" /> as in <c>String.match</c>, and/or type matches <paramref name="type" /> as in <see cref="GodotObject.IsClass(string)" />. Internal children are also searched over (see <c>internal</c> parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).</para>
@@ -62,7 +66,7 @@ public interface IAutoNode : ISuperNode {
   /// <para><b>Note:</b> As this method walks through all the descendants of the node, it is the slowest way to get references to other nodes. Whenever possible, consider caching the node references into variables.</para>
   /// <para><b>Note:</b> If you only want to find the first descendant node that matches a pattern, see <see cref="Node.FindChild(string,bool,bool)" />.</para>
   /// </summary>
-  INode[] FindChildren(
+  INode[] FindChildrenEx(
     string pattern, string type = "", bool recursive = true, bool owned = true
   );
 
@@ -85,7 +89,7 @@ public interface IAutoNode : ISuperNode {
   /// <returns>
   /// The child <see cref="Node" /> at the given index <paramref name="idx" />.
   /// </returns>
-  T GetChild<T>(int idx, bool includeInternal = false) where T : class, INode;
+  T GetChildEx<T>(int idx, bool includeInternal = false) where T : class, INode;
 
   /// <summary>
   /// <para>Returns a child node by its index (see <see cref="Node.GetChildCount(bool)" />). This method is often used for iterating all children of a node.</para>
@@ -98,7 +102,7 @@ public interface IAutoNode : ISuperNode {
   /// If <see langword="false" />, internal children are skipped (see <c>internal</c>
   /// parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).
   /// </param>
-  INode GetChild(int idx, bool includeInternal = false);
+  INode GetChildEx(int idx, bool includeInternal = false);
 
   /// <summary>
   /// Returns a child node by its index (see <see cref="Node.GetChildCount(bool)" />).
@@ -116,7 +120,8 @@ public interface IAutoNode : ISuperNode {
   /// <returns>
   /// The child <see cref="Node" /> at the given index <paramref name="idx" />, or <see langword="null" /> if not found.
   /// </returns>
-  T? GetChildOrNull<T>(int idx, bool includeInternal = false) where T : class, INode;
+  T? GetChildOrNullEx<T>(int idx, bool includeInternal = false)
+    where T : class, INode;
 
   /// <summary>
   /// <para>Returns the number of child nodes.</para>
@@ -126,13 +131,13 @@ public interface IAutoNode : ISuperNode {
   /// If <see langword="false" />, internal children are skipped (see <c>internal</c>
   /// parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).
   /// </param>
-  int GetChildCount(bool includeInternal = false);
+  int GetChildCountEx(bool includeInternal = false);
 
   /// <summary>
   /// <para>Returns an array of references to node's children.</para>
   /// <para>If <paramref name="includeInternal" /> is <c>false</c>, the returned array won't include internal children (see <c>internal</c> parameter in <see cref="Node.AddChild(Node,bool,Node.InternalMode)" />).</para>
   /// </summary>
-  INode[] GetChildren(bool includeInternal = false);
+  INode[] GetChildrenEx(bool includeInternal = false);
 
   /// <summary>
   /// <para>Fetches a node. The <see cref="NodePath" /> can be either a relative path (from the current node) or an absolute path (in the scene tree) to a node. If the path does not exist, <c>null</c> is returned and an error is logged. Attempts to access methods on the return value will result in an "Attempt to call &lt;method&gt; on a null instance." error.</para>
@@ -157,7 +162,7 @@ public interface IAutoNode : ISuperNode {
   /// </code></para>
   /// </summary>
   /// <param name="path">The path to the node to return.</param>
-  INode GetNode(NodePath path);
+  INode GetNodeEx(NodePath path);
 
   /// <summary>
   /// Similar to <see cref="Node.GetNode(NodePath)" />, but does not log an error if <paramref name="path" />
@@ -189,24 +194,24 @@ public interface IAutoNode : ISuperNode {
   /// <returns>
   /// The <see cref="Node" /> at the given <paramref name="path" />, or <see langword="null" /> if not found.
   /// </returns>
-  T GetNodeOrNull<T>(NodePath path) where T : class, INode;
+  T GetNodeOrNullEx<T>(NodePath path) where T : class, INode;
 
   /// <summary>
   /// <para>Similar to <see cref="Node.GetNode(NodePath)" />, but does not log an error if <paramref name="path" /> does not point to a valid <see cref="Node" />.</para>
   /// </summary>
-  INode? GetNodeOrNull(NodePath path);
+  INode? GetNodeOrNullEx(NodePath path);
 
   /// <summary>
   /// <para>Returns <c>true</c> if the node that the <see cref="NodePath" /> points to exists.</para>
   /// </summary>
   /// <param name="path">Node path.</param>
-  bool HasNode(NodePath path);
+  bool HasNodeEx(NodePath path);
 
   /// <summary>
   /// <para>Removes a child node. The node is NOT deleted and must be deleted manually.</para>
   /// <para><b>Note:</b> This function may set the <see cref="Node.Owner" /> of the removed Node (or its descendants) to be <c>null</c>, if that <see cref="Node.Owner" /> is no longer a parent or ancestor.</para>
   /// </summary>
   /// <param name="node">Node to remove.</param>
-  void RemoveChild(object node);
+  void RemoveChildEx(object node);
 }
 #pragma warning restore
