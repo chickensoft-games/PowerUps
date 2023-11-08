@@ -29,7 +29,7 @@ To use the PowerUps, add the following to your `.csproj` file. Be sure to get th
 <ItemGroup>
     <PackageReference Include="Chickensoft.SuperNodes" Version="1.6.1" PrivateAssets="all" OutputItemType="analyzer" />
     <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.6.1" />
-    <PackageReference Include="Chickensoft.PowerUps" Version="2.2.0-godot4.2.0-beta.5" PrivateAssets="all" />
+    <PackageReference Include="Chickensoft.PowerUps" Version="3.0.1-godot4.2.0-beta.5" PrivateAssets="all" />
     <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="2.0.0-godot4.2.0-beta.5 " />
     <!-- ^ Or whatever the latest versions are. -->
 </ItemGroup>
