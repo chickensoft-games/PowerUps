@@ -2,8 +2,6 @@
 
 [![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] [![Read the docs][read-the-docs-badge]][docs] ![line coverage][line-coverage]
 
- <!-- ![line coverage][line-coverage] ![branch coverage][branch-coverage] -->
-
 A collection of power-ups for your C# Godot game scripts that work with the [SuperNodes] source generator.
 
 ---
@@ -12,10 +10,10 @@ A collection of power-ups for your C# Godot game scripts that work with the [Sup
 <img alt="Chickensoft.PowerUps" src="Chickensoft.PowerUps/icon.png" width="200">
 </p>
 
-Currently, two PowerUps are provided by this package: `AutoNode` and `AutoDispose`.
+Currently, two PowerUps are provided by this package: `AutoNode` and `AutoSetup`.
 
 - 🌲 AutoNode: automatically connect fields and properties to their corresponding nodes in the scene tree — also provides access to nodes via their interfaces using [GodotNodeInterfaces].
-- 🚮 AutoDispose: automatically dispose of disposable properties owned by your script when it exits the scene tree.
+- 🛠 AutoSetup: provides a mechanism for late, two-phase initialization in Godot node scripts to facilitate unit-testing.
 
 > Chickensoft also maintains a third PowerUp for dependency injection called `AutoInject` that resides in its own [AutoInject] repository.
 
@@ -31,8 +29,8 @@ To use the PowerUps, add the following to your `.csproj` file. Be sure to get th
 <ItemGroup>
     <PackageReference Include="Chickensoft.SuperNodes" Version="1.6.1" PrivateAssets="all" OutputItemType="analyzer" />
     <PackageReference Include="Chickensoft.SuperNodes.Types" Version="1.6.1" />
-    <PackageReference Include="Chickensoft.PowerUps" Version="1.1.0" PrivateAssets="all" />
-    <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="1.7.0-godot4.2.0-beta.1" />
+    <PackageReference Include="Chickensoft.PowerUps" Version="2.2.0-godot4.2.0-beta.5" PrivateAssets="all" />
+    <PackageReference Include="Chickensoft.GodotNodeInterfaces" Version="2.0.0-godot4.2.0-beta.5 " />
     <!-- ^ Or whatever the latest versions are. -->
 </ItemGroup>
 ```
@@ -72,23 +70,6 @@ public partial class MyNode : Node2D {
   internal INode2D _my_unique_node = default!;
 }
 ```
-
-### 🤯 Using Interfaces
-
-If you're using [GodotNodeInterfaces], you can access and manipulate descendent nodes via their interface instead of their concrete Godot type. Each AutoNode receives a number of additional methods that match a Godot method, but with the added "Ex" suffix (short for Extended).
-
-- `AddChildEx()`
-- `FindChildEx()`
-- `FindChildrenEx()`
-- `GetChildEx()`
-- `GetChildrenEx()`
-- `GetChildOrNullEx()`
-- `GetChildCountEx()`
-- `GetChildrenEx()`
-- `GetNodeEx()`
-- `GetNodeOrNullEx()`
-- `HasNodeEx()`
-- `RemoveChildEx()`
 
 ### 🧪 Testing
 
@@ -150,44 +131,40 @@ public class MyNodeTest : TestClass {
 }
 ```
 
-## 🚮 AutoDispose
+## 🛠 AutoSetup
 
-The `AutoDispose` PowerUp will automatically dispose of writeable properties on your script that implement `IDisposable` but do not inherit `Godot.Node` when the node exits the scene tree, preventing the need for manually cleaning up disposable, non-node objects that your script owns.
-
-AutoDispose was designed to work nicely with the dependency injection system from [AutoInject] and disposable objects, like the bindings from [LogicBlocks].
+The `AutoSetup` will conditionally call the `void Setup()` method your node script has if from `_Ready` if (and only if) the `IsTesting` field it adds to your node is false. Conditionally calling a setup method allows you to split your node's late member initialization into two-phases, allowing nodes to be unit tested. If writing tests for your node, simply initialize any members that would need to be mocked in a test in your `Setup()` method.
 
 ```csharp
-using Chickensoft.AutoInject;
 using Chickensoft.PowerUps;
 using Godot;
 using SuperNodes.Types;
 
-// Note that Dependent is a PowerUp provided by AutoInject.
-
-[SuperNode(typeof(Dependent), typeof(AutoDispose))]
+[SuperNode(typeof(AutoSetup))]
 public partial class MyNode : Node2D {
   public override partial void _Notification(int what);
 
-  // Use AutoInject to lookup the nearest SomeDisposable object provided above
-  // us in the scene tree.
-  //
-  // Since this is a read-only property, it will not have Dispose called on it
-  // by AutoDispose when we exit the scene tree. This is desirable since this
-  // script doesn't own this object — it just needs to use it.
-  [Dependency]
-  public SomeDisposable DisposableDependency => DependOn<SomeDisposable>();
+  public MyObject Obj { get; set; } = default!;
 
-  // This object will automatically have Dispose called on it by AutoDispose 
-  // when we exit the scene tree since it is a writeable property (which tells
-  // AutoDispose this script owns it and should dispose of it).
-  public MyDisposable MyDisposableObject { get; set; } = default!;
+  public void Setup() {
+    // Setup is called from the Ready notification if our IsTesting property
+    // (added by AutoSetup) is false.
 
-  // Even though Godot nodes are disposable, this won't be disposed since it
-  // inherits from Godot.Node. Godot manages node references automatically.
-  public Node2D OtherNode { get; set; } = default!;
+    // Initialize values which would be mocked in a unit testing method.
+    Obj = new MyObject();
+  }
 
-  // ...
+  public void OnReady() {
+    // Guaranteed to be called after Setup()
+
+    // Use object we setup in Setup() method (or, if we're running in a unit 
+    // test, this will use whatever the test supplied)
+    Obj.DoSomething();
+  }
+}
 ```
+
+> 💡 [AutoInject] provides this functionality out-of-the-box for nodes that also need late, two-phase initialization. It also supplies an `IsTesting` property but will call the `Setup()` method after dependencies have been resolved (but before `OnResolved() is called`). If you're using AutoInject, note that you can either use the `AutoSetup` or `Dependent` PowerUp on a node script, but not both.
 
 ---
 
@@ -204,7 +181,6 @@ public partial class MyNode : Node2D {
 
 [SuperNodes]: https://github.com/chickensoft-games/SuperNodes
 [AutoInject]: https://github.com/chickensoft-games/AutoInject
-[LogicBlocks]: https://github.com/chickensoft-games/LogicBlocks
 [Nuget]: https://www.nuget.org/packages?q=Chickensoft
 [unique-nodes]: https://docs.godotengine.org/en/stable/tutorials/scripting/scene_unique_nodes.html
 

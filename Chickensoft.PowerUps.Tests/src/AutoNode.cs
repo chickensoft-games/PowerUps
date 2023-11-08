@@ -41,6 +41,12 @@ public class NodeAttribute : Attribute {
 /// Apply this PowerUp to your SuperNode to automatically connect declared node
 /// references to their corresponding instances in the scene tree.
 /// </summary>
+public interface IAutoNode : IFakeNodeTreeEnabled, ISuperNode { }
+
+/// <summary>
+/// Apply this PowerUp to your SuperNode to automatically connect declared node
+/// references to their corresponding instances in the scene tree.
+/// </summary>
 [PowerUp]
 public abstract partial class AutoNode : Node, IAutoNode {
   public FakeNodeTree? FakeNodes { get; set; }
@@ -53,188 +59,6 @@ public abstract partial class AutoNode : Node, IAutoNode {
     System.Collections.Generic.Dictionary<string, INode>? nodes
   ) => FakeNodes = new FakeNodeTree(this, nodes);
 
-  #region IAutoNode
-  public void AddChildEx(
-    object node,
-    bool forceReadableName = false,
-    InternalMode @internal =
-    InternalMode.Disabled
-  ) {
-    if (node is INodeAdapter adapter) {
-      // If it's an adapter, we can add the underlying node directly.
-      AddChild(adapter.Object, forceReadableName, @internal);
-      return;
-    }
-
-    if (node is Node godotNode) {
-      // If it's a Godot node, we can add it directly.
-      AddChild(godotNode, forceReadableName, @internal);
-      return;
-    }
-
-    if (node is INode iNode) {
-      // We can only add nodes by interface only when we are in a test
-      // environment, so check to see if that's been setup.
-      if (FakeNodes is not FakeNodeTree fakeNodeTree) {
-        throw new InvalidOperationException(
-          "Fake node tree has not been initialized. If you are attempting to " +
-          "unit test a node scene, make sure that you have called " +
-          "node.FakeNodeTree() to initialize the fake node tree."
-        );
-      }
-
-      // We are running in a test environment.
-      fakeNodeTree.AddChild(iNode);
-      return;
-    }
-
-    throw new InvalidOperationException(
-      $"Cannot add child of type {node.GetType()} to {GetType()}."
-    );
-  }
-
-  public INode? FindChildEx(string pattern, bool recursive, bool owned) {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.FindChild(pattern);
-    }
-    var node = FindChild(pattern, recursive, owned);
-    return node is null ? null : GodotInterfaces.AdaptNode(node);
-  }
-
-  public INode[] FindChildrenEx(
-    string pattern, string type = "", bool recursive = true, bool owned = true
-  ) {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.FindChildren(pattern);
-    }
-    var nodes = FindChildren(pattern, type, recursive, owned);
-    var adaptedNodes = new System.Collections.Generic.List<INode>(nodes.Count);
-    foreach (var node in nodes) {
-      adaptedNodes.Add(GodotInterfaces.AdaptNode(node));
-    }
-    return adaptedNodes.ToArray();
-  }
-
-  public T GetChildEx<T>(int idx, bool includeInternal = false)
-    where T : class, INode {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetChild<T>(idx)!;
-    }
-    var node = GetChild(idx, includeInternal);
-    return GodotInterfaces.Adapt<T>(node);
-  }
-
-  public INode GetChildEx(int idx, bool includeInternal) {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetChild(idx);
-    }
-    var node = GetChild(idx, includeInternal);
-    return GodotInterfaces.AdaptNode(node);
-  }
-
-  public T? GetChildOrNullEx<T>(
-    int idx, bool includeInternal = false
-  ) where T : class, INode {
-    // TODO: This uses GetNode under-the-hood since there's no non-generic
-    // overload for GetChildOrNull. GetChild will cause a warning from Godot if
-    // the node is actually null, and we can't pass through the generics since
-    // they are expected to be the node's interface.
-    //
-    // The fix for this is to add a method to GodotInterfaces that will invoke
-    // a callback with the generic type of the corresponding Godot node for any
-    // given interface type.
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetChild<T>(idx);
-    }
-    var node = GetChild(idx, includeInternal);
-    return GodotInterfaces.Adapt<T>(node);
-  }
-
-  public int GetChildCountEx(bool includeInternal = false) =>
-    FakeNodes is FakeNodeTree fakeNodeTree
-      ? fakeNodeTree.GetChildCount()
-      : GetChildCount(includeInternal);
-
-  public INode[] GetChildrenEx(bool includeInternal = false) {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetChildren();
-    }
-    var nodes = GetChildren(includeInternal);
-    var adaptedNodes = new System.Collections.Generic.List<INode>(nodes.Count);
-    foreach (var node in nodes) {
-      adaptedNodes.Add(GodotInterfaces.AdaptNode(node));
-    }
-    return adaptedNodes.ToArray();
-  }
-
-  public INode GetNodeEx(NodePath path) {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetNode(path)!;
-    }
-    var node = GetNode(path);
-    return node is null ? default! : GodotInterfaces.AdaptNode(node);
-  }
-
-  public INode? GetNodeOrNullEx(NodePath path) {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetNode(path);
-    }
-    var node = GetNodeOrNull(path);
-    return node is null
-      ? null
-      : (INode)GodotInterfaces.AdaptNode(node);
-  }
-
-  public T? GetNodeOrNullEx<T>(NodePath path) where T : class, INode {
-    if (FakeNodes is FakeNodeTree fakeNodeTree) {
-      return fakeNodeTree.GetNode<T>(path);
-    }
-    var node = GetNodeOrNull(path);
-    return node is null
-      ? null
-      : GodotInterfaces.Adapt<T>(node);
-  }
-
-  public bool HasNodeEx(NodePath path) =>
-    FakeNodes is FakeNodeTree fakeNodeTree
-      ? fakeNodeTree.HasNode(path)
-      : HasNode(path);
-
-  public void RemoveChildEx(object node) {
-    if (node is INodeAdapter adapter) {
-      // If it's an adapter, we can remove the underlying node directly.
-      RemoveChild(adapter.Object);
-      return;
-    }
-
-    if (node is Node godotNode) {
-      // If it's a Godot node, we can remove it directly.
-      RemoveChild(godotNode);
-      return;
-    }
-
-    if (node is INode iNode) {
-      // We can remove nodes by interface only when we are in a test
-      // environment, so check to see if that's been setup.
-      if (FakeNodes is not FakeNodeTree fakeNodeTree) {
-        throw new InvalidOperationException(
-          "Fake node tree has not been initialized. If you are attempting to " +
-          "unit test a node scene, make sure that you have called " +
-          "node.FakeNodeTree() to initialize the fake node tree."
-        );
-      }
-
-      // We are running in a test environment.
-      fakeNodeTree.RemoveChild(iNode);
-      return;
-    }
-
-    throw new InvalidOperationException(
-      $"Cannot remove child of type {node.GetType()} from {GetType()}."
-    );
-  }
-  #endregion IAutoNode
-
   #region ISuperNode
   // These don't need to be copied over since we will be copied into an
   // ISuperNode.
@@ -242,13 +66,16 @@ public abstract partial class AutoNode : Node, IAutoNode {
   [PowerUpIgnore]
   public ImmutableDictionary<string, ScriptPropertyOrField> PropertiesAndFields
       => throw new NotImplementedException();
+
   [PowerUpIgnore]
   public TResult GetScriptPropertyOrFieldType<TResult>(
       string scriptProperty, ITypeReceiver<TResult> receiver
     ) => throw new NotImplementedException();
+
   [PowerUpIgnore]
   public dynamic GetScriptPropertyOrField(string scriptProperty) =>
       throw new NotImplementedException();
+
   [PowerUpIgnore]
   public void SetScriptPropertyOrField(string scriptProperty, dynamic? value) =>
       throw new NotImplementedException();
@@ -289,6 +116,8 @@ public static class AutoNodeConnector {
       var path = nodeAttribute.ArgumentExpressions[0] as string ??
         AsciiToPascalCase(name);
 
+      Exception? e;
+
       // First, check to see if the node has been faked for testing.
       // Faked nodes take precedence over real nodes.
       if (autoNode.FakeNodes?.GetNode(path) is INode fakeNode) {
@@ -298,12 +127,14 @@ public static class AutoNodeConnector {
         var satisfiesFakeType =
           autoNode.GetScriptPropertyOrFieldType(name, _checker);
         if (!satisfiesFakeType) {
-          throw new InvalidOperationException(
+          e = new InvalidOperationException(
             $"Found a faked node at '{path}' of type " +
             $"'{fakeNode.GetType().Name}' that is not the expected type " +
             $"'{propertyOrField.Type.Name}' for member '{name}' on " +
             $"'{node.Name}'."
           );
+          GD.PushError(e.Message);
+          throw e;
         }
         // Faked node satisfies the expected type :)
         autoNode.SetScriptPropertyOrField(name, fakeNode);
@@ -311,23 +142,27 @@ public static class AutoNodeConnector {
       }
 
       // We're dealing with what should be an actual node in the tree.
-      var godotNode = node.GetNodeOrNull(path) ?? throw new
-        InvalidOperationException(
-          $"Node at '{path}' does not exist in either the real or fake " +
-          $"subtree for '{node.Name}' member '{name}' of type " +
+      var potentialChild = node.GetNodeOrNull(path);
+
+      if (potentialChild is not Node child) {
+        e = new InvalidOperationException(
+          $"AutoNode: Node at '{path}' does not exist in either the real or " + $"fake subtree for '{node.Name}' member '{name}' of type " +
           $"'{propertyOrField.Type.Name}'."
         );
+        GD.PushError(e.Message);
+        throw e;
+      }
 
       // see if the unchecked node satisfies the expected type of node from the
       // property type
-      _checker.Value = godotNode;
+      _checker.Value = child;
       var originalNodeSatisfiesType =
         autoNode.GetScriptPropertyOrFieldType(name, _checker);
 
       if (originalNodeSatisfiesType) {
         // Property expected a vanilla Godot node type and it matched, so we
         // set it and leave.
-        autoNode.SetScriptPropertyOrField(name, godotNode);
+        autoNode.SetScriptPropertyOrField(name, child);
         continue;
       }
 
@@ -336,25 +171,24 @@ public static class AutoNodeConnector {
       //
       // Check to see if the node needs to be adapted to satisfy an
       // expected interface type.
-      var adaptedNode = GodotInterfaces.AdaptNode(godotNode);
-      _checker.Value = adaptedNode;
-      var adaptedNodeSatisfiesType =
+      var adaptedChild = GodotInterfaces.AdaptNode(child);
+      _checker.Value = adaptedChild;
+      var adaptedChildSatisfiesType =
         autoNode.GetScriptPropertyOrFieldType(name, _checker);
 
-      // If the adapted node does not satisfy the expected interface/adapter
-      // node type, then we can't connect the node to the property.
-      if (!adaptedNodeSatisfiesType) {
-        // Tell user we can't connect the node to the property.
-        throw new InvalidOperationException(
-          $"Node at '{path}' of type '{godotNode.GetType().Name}' does not " +
-          $"satisfy the expected type '{propertyOrField.Type.Name}' for " +
-          $"member '{name}' on '{node.Name}'."
-        );
+      if (adaptedChildSatisfiesType) {
+        autoNode.SetScriptPropertyOrField(name, adaptedChild);
+        continue;
       }
 
-      // Otherwise, the adapted node satisfies the expected adapter or interface
-      // type, so we can be done.
-      autoNode.SetScriptPropertyOrField(name, adaptedNode);
+      // Tell user we can't connect the node to the property.
+      e = new InvalidOperationException(
+        $"Node at '{path}' of type '{child.GetType().Name}' does not " +
+        $"satisfy the expected type '{propertyOrField.Type.Name}' for " +
+        $"member '{name}' on '{node.Name}'."
+      );
+      GD.PushError(e.Message);
+      throw e;
     }
   }
 
